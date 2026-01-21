@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 rng = np.random.default_rng()
 import random
+import pygame
 
 
 class Map:
@@ -36,7 +37,7 @@ class Food(Map):
     "wall": 1,
     "food": 3,
     "trap_1": -1,
-    "trap_2": -2
+    "queue": -2
 }
     def add(self, cell_type):
 
@@ -48,7 +49,104 @@ class Food(Map):
         ]
 
         i, j = random.choice(empty_cell) #random selection 
-        self.data[i][j] = self.Cell_status[cell_type]
+        self.data[i][j] = self.Cell_status[cell_type] # regarding the status that we want of the cell, update diff value
+        if cell_type == "food": 
+            self.stock_food -= 1
+
+#snake
+class Snake:
+    def __init__(self, the_map):
+        self.map = the_map #notre array avec des 0 et des 1
+
+        self.head = (self.map.largeur//2, self.map.longueur//2) #démarre au milieu de data
+        self.direction = (1,0) #avance vers la droite de base
+
+
+        #changement par un 2 pour la position de base du snake
+        self.map.data[self.head[0]][self.head[1]] = 2
+
+
+    def handle_key(self, key): #récupère l'info sur quelle flèche est pressée
+        if key == pygame.K_UP: #true si la flèche vers le haut pressée
+            self.direction = (0,-1) #cest inversé c'est normal lol
+        if key == pygame.K_DOWN :
+            self.direction = (0,1) #true si la flèche vers le bas est pressée
+
+        if key == pygame.K_LEFT :
+            self.direction=(-1,0)
+
+        if key == pygame.K_RIGHT:
+            self.direction = (1,0)
+
+    def moove(self): #bouge selon la flèche pressée
+        x,y = self.head #position initiale de la tête = 2 sur la map
+        self.map.data[y][x] = 0 #maintenant c'est un 0 psq on va bouger
+
+        new_x, new_y = x + self.direction[0], y+ self.direction[1] #selon la flèche pressée
+
+        self.map.data[new_y][new_x] = 2 #nouvelle position de la tête
+
+#cells pour test si le snake bouge bien
+
+#%% initialisation de la map
+
+get_map = Map()
+
+get_map.walls()
+
+
+
+print(get_map.data)
+
+#%% initialisation du snake
+snake = Snake(get_map)
+
+#%% apparition du snake
+
+print(get_map.data)
+
+#%% petite fenêtre pour pygame
+
+pygame.init()
+pygame.display.set_mode((1, 1))  # fenêtre minimale
+
+#%% recup l'info de la flèc
+
+key_pressed = False
+
+while not key_pressed:
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            snake.handle_key(event.key)
+            key_pressed = True
+
+
+
+
+#%% moove
+
+snake.moove()
+
+#%% nouvelle data
+
+get_map.data
+
+class Game: 
+
+    """
+    Docstring pour Game
+
+    Recuperer la photo 
+    """
+
+    # configuration initiale #
+
+    # position ini snake 
+
+    #
+
+
+
 
 
 #Test 
