@@ -10,7 +10,7 @@ This project contains:
 
 - **Game of life** primary version 
 
- - A **Snake game** implementation** using separate classes:
+ - A **Snake game** implementation using separate classes:
   - `map.py`
   - `snake.py`
   - `food.py`
