@@ -1,6 +1,6 @@
 # Nier - Cellular Automata
 
-A simple Snake / Game of Life project using Python and Pygame.
+A simple Snake project using Python and Pygame.
 
 ---
 
@@ -14,7 +14,7 @@ This project contains:
   - `map.py`
   - `snake.py`
   - `food.py`
-  - 
+    
 - A **Pygame interface** (`interface.py`) to play the game
 
 ---
