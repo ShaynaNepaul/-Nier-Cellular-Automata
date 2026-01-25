@@ -1,11 +1,22 @@
-# -Nier-Cellular-Automata
-#21/01
-#game_of_life.py : all the code available on google collab
-#interface.py : need to be tested
+# Nier - Cellular Automata
 
+A simple Snake / Game of Life project using Python and Pygame.
 
-#25/01
-#game_of_life.py : new version (added changes, still needs to be tested with pygame
-#map.py, snake.py, food.py : separated .py files for each class
+---
 
+## Description
 
+This project contains:
+
+- **Game of life** primary version 
+
+ - A **Snake game** implementation** using separate classes:
+  - `map.py`
+  - `snake.py`
+  - `food.py`
+  - 
+- A **Pygame interface** (`interface.py`) to play the game
+
+---
+
+## Project Structure
