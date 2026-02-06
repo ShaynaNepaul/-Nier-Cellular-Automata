@@ -24,9 +24,6 @@ class Map:
                     self.data[i][j] =1 #ça remplace les murs par la valeur 1
                     self.data[i-1][j-1] =1
 
-
-
-
 class Food:
 
     Cell_status = {
@@ -34,7 +31,7 @@ class Food:
         "wall": 1,
         "head" : 2,
         "food": 3,
-        "wall_trap ": -31,
+        "wall_trap": -31,
         "orientation_trap" : -32, 
         "acceleration_trap" : -33,
         "tail": -2,
@@ -46,17 +43,12 @@ class Food:
         self.map = the_map
         self.stock_food = stock_food
 
-    def add(self, cell_type):
+    def identify_empty_cells(self):
 
-        """
-        Identifies available empty cells and update the map with the choosen object
-        Returns False if the map is full.
-
-        :param cell_type: str
-        """
-
+        "Identifies available empty cells and return new random coordinate generated" 
         # get all empty cells from the map
         # store the coordinate of cells whose value is 0
+
         empty_cells = [
             (i, j)
             for i in range(self.map.longueur)
@@ -67,20 +59,101 @@ class Food:
         # check whether any cell is available to add something
         if not empty_cells:
             return False
-
-        # randomly select a pair of coordinates (i, j) from the list of empty cells
         i, j = random.choice(empty_cells)
+
+        return i,j
+
+
+    def add(self, cell_type):
+
+        """
+        Identifies available empty cells and update the map with the choosen object
+        Returns False if the map is full.
+
+        :param cell_type: str
+        """
+        # randomly select a pair of coordinates (i, j) from the list of empty cells
+        i, j = self.identify_empty_cells()
 
         # update the map at the chosen coordinates with the value corresponding to 'cell_type'
         self.map.data[i][j] = self.Cell_status[cell_type]
 
     def add_food(self):
-        if self.stock_food > 0 and self.add("food") :
-            self.stock_food -= 1
-            return True
+        return self.add("food")
 
-    def add_trap(self, trap_type="trap_1"):
-        return self.add(trap_type)
+    def add_wall_trap(self): 
+        return self.add("wall_trap")
+    
+    def add_orientation_trap(self): 
+        return self.add("orientation_trap")
+    
+    def acceleration_trap(self):
+        return self.add("acceleration_trap")
+    
+    def pop_up_bloch_walls(self): 
+
+        " Add a 3*3 bloc of walls"
+
+        i,j = self.identify_empty_cells()
+
+        #Define boundaries to prevent the index to be out of the map
+        r_start, r_end = max(0, i - 1), min(self.map.longueur, i + 2)
+        c_start, c_end = max(0, j - 1), min(self.map.largeur, j + 2)
+        
+        #Among the empty cells of the map, ones where no problem of boundaries
+        sub_map = self.map.data[r_start:r_end, c_start:c_end]
+
+        #Fill sub_map with O 
+        mask = (sub_map == 0)
+        sub_map[mask] = self.Cell_status["wall"]
+
+    def pop_up_line_wall(self): 
+        " Add a full horizontal or vertical line of walls"
+
+        i,j = self.identify_empty_cells()
+        param = random.random()
+
+        if param <= 0.5 : 
+            # Honrizontal line
+            line = self.map.data[i:]
+            mask = (line == 0)
+            line[mask] = self.Cell_status["wall"]
+        else : 
+            #Vertical line
+            line = self.map.data[:j]
+            mask = (line == 0)
+            line[mask] = self.Cell_status["wall"]
+
+    def pop_up_tunnel_wall(self): 
+        " Creates two parallel walls with a path in the middle"
+        param = random.random()
+        i, j = self.identify_empty_cells()
+
+        if param < 0.5 : 
+            orientation = "horizontal"
+        else : 
+            orientation = "vertical"
+
+        if orientation == "horizontal": 
+
+            line_i = self.map.data[i:]
+            line_i2 = self.map.data[i+2:]
+            mask_i = (line_i == 0)
+            mask_i2 = (line_i2 == 0)
+            line_i[mask_i] = self.Cell_status["wall"]
+            line_i2[mask_i2] = self.Cell_status["wall"]
+
+        else : 
+            line_j = self.map.data[:j]
+            line_j2 = self.map.data[:j+2]
+            mask_j = (line_j == 0)
+            mask_j2 = (line_j2 == 0)
+            line_j[mask_j] = self.Cell_status["wall"]
+            line_j2[mask_j2] = self.Cell_status["wall"]
+
+
+
+
 
     def random_spawn(self):
 
