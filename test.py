@@ -34,9 +34,11 @@ class Food:
         "wall_trap": -31,
         "orientation_trap" : -32, 
         "acceleration_trap" : -33,
+        "acceleration_zone" : -333,
         "tail": -2,
         "body" : 22,
-        "Portail" :-4
+        "portal_A" :-41, 
+        "portal_B" : -42
     }
 
     def __init__(self, the_map, stock_food):
@@ -151,26 +153,39 @@ class Food:
             line_j[mask_j] = self.Cell_status["wall"]
             line_j2[mask_j2] = self.Cell_status["wall"]
 
+    def speed_up_zone(self): 
+        i,j = self.identify_empty_cells()
+
+        r_start, r_end = max(0, i - 4), min(self.map.longueur, i + 5)
+        c_start, c_end = max(0, j - 4), min(self.map.largeur, j + 5)
+        
+        sub_map = self.map.data[r_start:r_end, c_start:c_end]
+
+        mask = (sub_map == 0)
+        sub_map[mask] = self.Cell_status["acceleration_zone"]
+        
+        # We return the coordinates so the game knows what to delete later
+        return (r_start, r_end, c_start, c_end)
+    
+    def portail(self): 
+
+        pos_a = self.identify_empty_cells()
+        pos_b = self.identify_empty_cells()
+
+        #1 Verify both position are different 
+        if pos_a != pos_b : 
+            i_a, j_a = pos_a
+            i_b, j_b = pos_b
+            
+            # 2. Mark them on the map
+            self.map.data[i_a, j_a] = self.Cell_status["portal_A"]
+            self.map.data[i_b, j_b] = self.Cell_status["portal_B"]
+            
+            # Return coordinates 
+            return pos_a, pos_b
 
 
 
-
-    def random_spawn(self):
-
-        # Generate a random float between 0.0 and 1.0
-        param = random.random()
-
-        # If the value is less than 0.4
-        if param < 0.4 :
-            self.add_trap()
-
-        # If the value is less than 0.8 (both this and first if runs)
-        if param < 0.8 :
-            self.add_trap()
-
-        # If the value is 0.8 or higher
-        else :
-            self.add("fatal_trap")
 
 
 
