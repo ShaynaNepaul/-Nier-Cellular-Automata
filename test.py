@@ -36,7 +36,7 @@ class Food:
         "food": 3,
         "wall_trap ": -31,
         "orientation_trap" : -32, 
-        "acceleration_trap" : - 33,
+        "acceleration_trap" : -33,
         "tail": -2,
         "body" : 22,
         "Portail" :-4
