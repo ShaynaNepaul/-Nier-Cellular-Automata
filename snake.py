@@ -1,25 +1,32 @@
 import pygame
 from map import Map
+from food import Food
+from interface import Display
 
 class Snake:
     def __init__(self, the_map):
-        self.map = the_map #notre array avec des 0 et des 1
-        self.head = (self.map.largeur//2, self.map.longueur//2) #démarre au milieu de data
-        self.direction = (1,0) #avance vers la droite de base
-        self.snake_speed = 15 #snake speed
-        self.alive = True #if the snake is still alive or dead
-        self.life_jauge = 100 #Health as percentage
-        self.score = 0 #player's current score
+        self.map = the_map #map initialization with only 0 and 1
+        self.score = 0
+        self.head = (self.map.largeur//2, self.map.longueur//2) #start in the middle of the map
+        self.direction = (1,0) # Initial movement: moving right
 
-        #changement par un 2 pour la position de base du snake
-        self.map.data[self.head[0]][self.head[1]] = 2
+        #body is a list of coordinates [x,y] for each part of the body
+        self.body = [[self.head[0],self.head[1]], [self.head[0]-1,self.head[1]] ] # Initialy body consists of the head and one tail segment behind it
+        self.tail = self.body[-1]
+
+        #Update map : 2 represents the head
+        self.map.data[self.head[1]][self.head[0]] = 2
+        # Update map: -2 represents the tail
+        self.map.data[self.tail[1]][self.tail[0]] = -2
+        self.alive = True
 
 
-    def handle_key(self, key): #récupère l'info sur quelle flèche est pressée
-        if key == pygame.K_UP: #true si la flèche vers le haut pressée
+    def handle_key(self, key): 
+        # Get info on which arrow key is pressed
+        if key == pygame.K_UP: #true if up arrow is pressed
             self.direction = (0,-1) #cest inversé c'est normal lol
         if key == pygame.K_DOWN :
-            self.direction = (0,1) #true si la flèche vers le bas est pressée
+            self.direction = (0,1) #true if down arrow is pressed
 
         if key == pygame.K_LEFT :
             self.direction=(-1,0)
@@ -27,105 +34,53 @@ class Snake:
         if key == pygame.K_RIGHT:
             self.direction = (1,0)
 
-    def moove(self): #bouge selon la flèche pressée
+    def moove(self, the_food): #bouge selon
+        """ Movement implementation """
+        x,y = self.head #Initial position of the head on the map
+        old_tail = self.body[-1] # Store last tail position to clear it later
 
-        x_before, y_before = self.head #before mouvement
-        new_x, new_y = x_before + self.direction[0], y_before+ self.direction[1] #selon la flèche pressée #arrival cell's coordinate
+        new_x, new_y = x + self.direction[0], y+ self.direction[1] # new head position according to the arrow pressed
+        self.head= (new_x, new_y)
 
-        arrival_cell =  self.map.data[new_y][new_x] #arrival cell's value
+        # --- Snake Evolution ---
 
-        #Game Over : update self.alive 
-        if arrival_cell in (self.map.Cell_status["wall"], self.map.Cell_status["tail"], self.map.Cell_status["fatal_trap"]): 
-            self.alive = False 
-        
-        #EMPTY CELL : DEFAULT MOUVEMENT
-        if arrival_cell == self.map.Cell_status["empty"]:
-            self.map.data[y_before][x_before] = self.map.Cell_status["empty"] #maintenant c'est un 0 psq on va bouger
-            self.map.data[new_y][new_x] = self.map.Cell_status["head"] #nouvelle position de la tête sur la map
-            self.head = (new_x,new_y) 
-        
-        #FOOD : 
-        if arrival_cell == self.map.Cell_status["food"] : 
-            self.life_jauge += 10
-            self.score += 1
+        # Case 0: Empty space
+        if self.map.data[new_y][new_x]==0:
+            self.body.insert(0, self.head) # Add new head at the first position in body with new tile coordinates
+            self.body.pop() # Remove old tail
 
-            #MOVE
-            self.map.data[y_before][x_before] = self.map.Cell_status["empty"] #maintenant c'est un 0 psq on va bouger
-            self.map.data[new_y][new_x] = self.map.Cell_status["head"] #nouvelle position de la tête sur la map
-            self.head = (new_x,new_y)
+        # Case 3: Food
+        elif self.map.data[new_y][new_x] == 3:
+            self.body.insert(0,self.head) # Add new head (no pop = growth of the snake)
+            the_food.stock_food-=1 #Update food storage
+            the_food.add_food() # Add an apple right after eating one
+            self.score += 1 # Update score
 
-        if arrival_cell == self.map.Cell_status["food_speed"] : 
-            self.life_jauge += 10
-            self.score += 1
-            self.snake_speed += 10
-
-            #MOVE
-            self.map.data[y_before][x_before] = self.map.Cell_status["empty"] 
-            self.map.data[new_y][new_x] = self.map.Cell_status["head"] 
-            self.head = (new_x,new_y)
-
-        #TRAP : lost vitality 
-        if arrival_cell == self.map.Cell_status["trap_1"] : 
-            self.life_jauge -= 10
-            self.score -= 1
-
-            #MOVE
-            self.map.data[y_before][x_before] = self.map.Cell_status["empty"] 
-            self.map.data[new_y][new_x] = self.map.Cell_status["head"] 
-            self.head = (new_x,new_y)
-            #game over if life_jauge drops to 0
-            if self.life_jauge <= 0:
-                self.alive = False
-
-        ##############################
-
-        """
-
-        x,y = self.head #position initiale de la tête = 2 sur la map
-        self.map.data[y][x] = 0 #maintenant c'est un 0 psq on va bouger
-
-        new_x, new_y = x + self.direction[0], y+ self.direction[1] #selon la flèche pressée
-
-        self.map.data[new_y][new_x] = 2 #nouvelle position de la tête
-    """
-
-#cells pour test si le snake bouge bien
-
-#%% initialisation de la map
-
-get_map = Map()
-
-get_map.walls()
-
-print(get_map.data)
-
-#%% initialisation du snake
-snake = Snake(get_map)
-
-#%% apparition du snake
-
-print(get_map.data)
-
-#%% petite fenêtre pour pygame
-
-pygame.init()
-pygame.display.set_mode((1, 1))  # fenêtre minimale
-
-#%% recup l'info de la flèc
-
-key_pressed = False
-
-while not key_pressed:
-    for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN:
-            snake.handle_key(event.key)
-            key_pressed = True
+        # Case -3: Trap 
+        elif self.map.data[new_y][new_x] == -3:
+            self.score -= 10 # Decrease the score 
+            self.body.insert(0,self.head)
+            #on tej la moitié de son corps :
 
 
-#%% moove
+        # Case: Wall (1) or Self-collision (22 or -2)
+        elif self.map.data[new_y][new_x] == -1 or self.map.data[y][x]==22 or self.map.data[y][x]==-2:
+            self.alive = False
+            print("game over")
 
-snake.moove()
 
-#%% nouvelle data
+        # --- MAP RENDERING UPDATE ---
 
-get_map.data
+        self.map.data[new_y][new_x] = 2 # New position of the head
+        tail = self.body[-1] # Position of the tail
+
+        self.map.data[tail[1]][tail[0]] = -2 #New position of the tail
+        self.map.data[old_tail[1]][old_tail[0]] = 0 # Clear the old tail position
+
+        # Replace other positions of the body by 22
+
+        for i in range(1,len(self.body)-1):
+
+            body_i = self.body[i]
+
+            self.map.data[body_i[1]][body_i[0]] = 22
