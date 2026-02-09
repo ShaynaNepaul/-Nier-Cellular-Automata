@@ -1,6 +1,4 @@
 import random
-from map import Map
-
 
 class Food:
 
@@ -9,27 +7,26 @@ class Food:
         "wall": 1,
         "head" : 2,
         "food": 3,
-        "food_speed" : 4,
-        "trap_1": -1,
-        "fatal_trap" : -3,
-        "tail": -2
+        "wall_trap": -31,
+        "orientation_trap" : -32, 
+        "acceleration_trap" : -33,
+        "acceleration_zone" : -333,
+        "tail": -2,
+        "body" : 22,
+        "portal_A" :-41, 
+        "portal_B" : -42
     }
 
-    def __init__(self, the_map):
-        self.map = the_map          
-        self.stock_food = 10
+    def __init__(self, the_map, stock_food):
+        self.map = the_map
+        self.stock_food = stock_food
 
-    def add(self, cell_type):
+    def identify_empty_cells(self):
 
-        """
-        Identifies available empty cells and update the map with the choosen object
-        Returns False if the map is full.
-        
-        :param cell_type: str
-        """
-
+        "Identifies available empty cells and return new random coordinate generated" 
         # get all empty cells from the map
         # store the coordinate of cells whose value is 0
+
         empty_cells = [
             (i, j)
             for i in range(self.map.longueur)
@@ -37,57 +34,144 @@ class Food:
             if self.map.data[i][j] == self.Cell_status["empty"]
         ]
 
-        # check whether any cell is available to add something 
+        # check whether any cell is available to add something
         if not empty_cells:
             return False
-        
-        # randomly select a pair of coordinates (i, j) from the list of empty cells
         i, j = random.choice(empty_cells)
+
+        return i,j
+
+
+    def add(self, cell_type):
+
+        """
+        Identifies available empty cells and update the map with the choosen object
+        Returns False if the map is full.
+
+        :param cell_type: str
+        """
+        # randomly select a pair of coordinates (i, j) from the list of empty cells
+        i, j = self.identify_empty_cells()
 
         # update the map at the chosen coordinates with the value corresponding to 'cell_type'
         self.map.data[i][j] = self.Cell_status[cell_type]
 
     def add_food(self):
-        if self.stock_food > 0 and self.add("food") :
-            self.stock_food -= 1
-            return True
-    
-    def add_trap(self, trap_type="trap_1"):
-        return self.add(trap_type)
-    
-    def random_spawn(self):
+        return self.add("food")
 
-        # Generate a random float between 0.0 and 1.0
+    def add_wall_trap(self): 
+        return self.add("wall_trap")
+    
+    def add_orientation_trap(self): 
+        return self.add("orientation_trap")
+    
+    def acceleration_trap(self):
+        return self.add("acceleration_trap")
+    
+    def pop_up_bloch_walls(self): 
+
+        " Add a 3*3 bloc of walls"
+
+        i,j = self.identify_empty_cells()
+
+        #Define boundaries to prevent the index to be out of the map
+        r_start, r_end = max(0, i - 1), min(self.map.longueur, i + 2)
+        c_start, c_end = max(0, j - 1), min(self.map.largeur, j + 2)
+        
+        #Among the empty cells of the map, ones where no problem of boundaries
+        sub_map = self.map.data[r_start:r_end, c_start:c_end]
+
+        #Fill sub_map with O 
+        mask = (sub_map == 0)
+        sub_map[mask] = self.Cell_status["wall"]
+
+    def pop_up_line_wall(self): 
+        " Add a full horizontal or vertical line of walls"
+
+        i,j = self.identify_empty_cells()
         param = random.random()
 
-        # If the value is less than 0.4 
-        if param < 0.4 : 
-            self.add_trap()
-        
-        # If the value is less than 0.8 (both this and first if runs)
-        if param < 0.8 : 
-            self.add_trap()
-        
-        # If the value is 0.8 or higher
+        if param <= 0.5 : 
+            # Honrizontal line
+            line = self.map.data[i:]
+            mask = (line == 0)
+            line[mask] = self.Cell_status["wall"]
         else : 
-            self.add("fatal_trap")
+            #Vertical line
+            line = self.map.data[:j]
+            mask = (line == 0)
+            line[mask] = self.Cell_status["wall"]
+
+    def pop_up_tunnel_wall(self): 
+        " Creates two parallel walls with a path in the middle"
+        param = random.random()
+        i, j = self.identify_empty_cells()
+
+        if param < 0.5 : 
+            orientation = "horizontal"
+        else : 
+            orientation = "vertical"
+
+        if orientation == "horizontal": 
+
+            line_i = self.map.data[i:]
+            line_i2 = self.map.data[i+2:]
+            mask_i = (line_i == 0)
+            mask_i2 = (line_i2 == 0)
+            line_i[mask_i] = self.Cell_status["wall"]
+            line_i2[mask_i2] = self.Cell_status["wall"]
+
+        else : 
+            line_j = self.map.data[:j]
+            line_j2 = self.map.data[:j+2]
+            mask_j = (line_j == 0)
+            mask_j2 = (line_j2 == 0)
+            line_j[mask_j] = self.Cell_status["wall"]
+            line_j2[mask_j2] = self.Cell_status["wall"]
+    
+    def reduce_map_wall(self): 
+        """
+        Reduce the size of the map by adding walls with a thickness
+        """
+        length = self.map.hauteur 
+        width = self.map.largeur 
+        #Up line
+        self.map.data[:5,:] = self.Cell_status["wall"]
+        #bottom line
+        self.map.data[length- 5:,:] = self.Cell_status["wall"]
+        #Left 
+        self.map.data[:,5:] = self.Cell_status["wall"]
+        #Right 
+        self.map.data[:,:width-5] = self.Cell_status["wall"]
 
 
+    def speed_up_zone(self): 
+        i,j = self.identify_empty_cells()
 
-#Test
-game_map = Map()
-food = Food(game_map)
+        r_start, r_end = max(0, i - 4), min(self.map.longueur, i + 5)
+        c_start, c_end = max(0, j - 4), min(self.map.largeur, j + 5)
+        
+        sub_map = self.map.data[r_start:r_end, c_start:c_end]
 
-game_map.walls()
-print(" map ini \n")
-print(game_map.data)
+        mask = (sub_map == 0)
+        sub_map[mask] = self.Cell_status["acceleration_zone"]
+        
+        # We return the coordinates so the game knows what to delete later
+        return (r_start, r_end, c_start, c_end)
+    
+    def portail(self): 
 
-print(" spawn \n")
-food.random_spawn()
-print(game_map.data)
+        pos_a = self.identify_empty_cells()
+        pos_b = self.identify_empty_cells()
 
-print(" spawn \n")
-food.random_spawn()
-print(game_map.data)
-
-
+        #1 Verify both position are different 
+        if pos_a != pos_b : 
+            i_a, j_a = pos_a
+            i_b, j_b = pos_b
+            
+            # 2. Mark them on the map
+            self.map.data[i_a, j_a] = self.Cell_status["portal_A"]
+            self.map.data[i_b, j_b] = self.Cell_status["portal_B"]
+            
+            # Return coordinates 
+            return pos_a, pos_b
