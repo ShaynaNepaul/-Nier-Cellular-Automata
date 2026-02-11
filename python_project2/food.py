@@ -14,7 +14,7 @@ class Food:
         "tail": -2,
         "body" : 22,
         "portal_A" :-41, 
-        "portal_B" : -42
+        "portal_B" : -41
     }
 
     def __init__(self, the_map, stock_food):
@@ -46,18 +46,30 @@ class Food:
 
         """
         Identifies available empty cells and update the map with the choosen object
-        Returns False if the map is full.
+        Returns True if successful, False if the map is full.
 
         :param cell_type: str
         """
-        # randomly select a pair of coordinates (i, j) from the list of empty cells
+        # randomly select a pair of coordinates (i, j) from the list empty_cells
+        if self.identify_empty_cells() is False : 
+            print("No empty spot on the map")
+            return False
+        
         i, j = self.identify_empty_cells()
 
         # update the map at the chosen coordinates with the value corresponding to 'cell_type'
         self.map.data[i][j] = self.Cell_status[cell_type]
+        return True
 
     def add_food(self):
-        return self.add("food")
+        """
+        Add an apple on the map
+        Return True whether an apple has been placed 
+        """
+        apple_placed = self.add("food")
+        if apple_placed is True : 
+            self.stock_food -= 1
+        return apple_placed
 
     def add_wall_trap(self): 
         return self.add("wall_trap")
@@ -93,12 +105,12 @@ class Food:
 
         if param <= 0.5 : 
             # Honrizontal line
-            line = self.map.data[i:]
+            line = self.map.data[i,:]
             mask = (line == 0)
             line[mask] = self.Cell_status["wall"]
         else : 
             #Vertical line
-            line = self.map.data[:j]
+            line = self.map.data[:,j]
             mask = (line == 0)
             line[mask] = self.Cell_status["wall"]
 
@@ -114,16 +126,16 @@ class Food:
 
         if orientation == "horizontal": 
 
-            line_i = self.map.data[i:]
-            line_i2 = self.map.data[i+2:]
+            line_i = self.map.data[i,:]
+            line_i2 = self.map.data[i+2,:]
             mask_i = (line_i == 0)
             mask_i2 = (line_i2 == 0)
             line_i[mask_i] = self.Cell_status["wall"]
             line_i2[mask_i2] = self.Cell_status["wall"]
 
         else : 
-            line_j = self.map.data[:j]
-            line_j2 = self.map.data[:j+2]
+            line_j = self.map.data[:,j]
+            line_j2 = self.map.data[:,j+2]
             mask_j = (line_j == 0)
             mask_j2 = (line_j2 == 0)
             line_j[mask_j] = self.Cell_status["wall"]
@@ -136,13 +148,13 @@ class Food:
         length = self.map.hauteur 
         width = self.map.largeur 
         #Up line
-        self.map.data[:5,:] = self.Cell_status["wall"]
+        self.map.data[:5, :] = self.Cell_status["wall"]
         #bottom line
-        self.map.data[length- 5:,:] = self.Cell_status["wall"]
+        self.map.data[length-5:, :] = self.Cell_status["wall"]
         #Left 
-        self.map.data[:,5:] = self.Cell_status["wall"]
+        self.map.data[:, :5] = self.Cell_status["wall"]
         #Right 
-        self.map.data[:,:width-5] = self.Cell_status["wall"]
+        self.map.data[:, width-5:] = self.Cell_status["wall"]
 
 
     def speed_up_zone(self): 
