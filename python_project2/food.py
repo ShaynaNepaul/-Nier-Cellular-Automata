@@ -68,9 +68,8 @@ class Food:
         """
         apple_placed = self.add("food")
         if apple_placed is True : 
-            self.stock_food -= 1
-        return apple_placed
-
+            return self.add("food")
+        
     def add_wall_trap(self): 
         return self.add("wall_trap")
     
