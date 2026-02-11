@@ -10,10 +10,17 @@ import pygame
    
 class Gameboard:
 
-    def __init__(self):
-        self.score = 1
+    def __init__(self, snake):
+        
+        
         self.game_over = False
-
+        self.snake = snake
+        self.score = snake.score
+        
+    def end_game(self):
+        
+        if not self.snake.alive:
+            self.game_over = True
 
 
 
@@ -45,7 +52,7 @@ class Display:
         
         
         self.img_game_over = pygame.image.load("game_over.png").convert_alpha()
-        
+        self.img_victoire = pygame.image.load("victoire.png").convert_alpha()
         
         
         
@@ -59,7 +66,7 @@ class Display:
         self.snake_head = pygame.transform.smoothscale(self.snake_head, (self.cell_size, self.cell_size))
         
         self.portail_img = pygame.image.load("portail.jpg").convert_alpha()
-        self.portail_img = pygame.transform.smoothscale(self.portail_img, (self.cell_size*3, self.cell_size*3))
+        self.portail_img = pygame.transform.smoothscale(self.portail_img, (self.cell_size, self.cell_size))
         
         
         self.snake_head_up    = self.snake_head
@@ -92,7 +99,7 @@ class Display:
             pygame.Rect(x0 + w + g, y0 + h + g, w, h) ]  # level 4 ]        
         
         
-    def display_game_over(self): 
+    def display_game_over(self, screen): 
         
         target_w = 500
         ratio = target_w / self.img_game_over.get_width()
@@ -107,7 +114,20 @@ class Display:
         screen.blit(overlay, (0, 0))
         screen.blit(self.img_game_over, go_rect.topleft)
         
+    def display_victoire(self, screen):
+        target_w = 500
+        ratio = target_w / self.img_victoire.get_width()
+        target_h = int(self.img_victoire.get_height() * ratio)
+        self.img_victoire = pygame.transform.smoothscale(self.img_victoire, (target_w, target_h))
         
+        go_rect = self.img_game_over.get_rect(center=screen.get_rect().center)
+        
+        
+        overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 140))  # noir avec alpha
+        screen.blit(overlay, (0, 0))
+        screen.blit(self.img_victoire, go_rect.topleft)        
+         
         
         
     def calculate_offset(self, screen):
@@ -190,7 +210,7 @@ class Display:
        
     def draw_portail(self, screen): 
          
-         coords = np.argwhere(self.map.data == 34) #recupère sous forme de liste les coordonnées où on a un 3   
+         coords = np.argwhere(self.map.data == -41) #recupère sous forme de liste les coordonnées où on a un 3   
          
          for k in coords:
 
@@ -204,13 +224,13 @@ class Display:
          coords = np.argwhere(self.map.data == 2)
          x, y = self.cell_to_pixel(coords[0][0], coords[0][1])
          
-         if self.snake.direction == (1, 0) :
+         if self.snake.direction == (-1, 0) :
              screen.blit(self.snake_head_right, (x, y)) #blit c'est pour afficher une image
          
          elif self.snake.direction == (0, 1):
              screen.blit(self.snake_head_up, (x, y))
              
-         elif self.snake.direction == (-1, 0):
+         elif self.snake.direction == (1, 0):
              screen.blit(self.snake_head_left, (x, y))
              
          else: 
@@ -299,67 +319,80 @@ class Display:
 
 
     def draw_level_select(self, screen):
+        mouse_pos = pygame.mouse.get_pos()  # position actuelle de la souris
+    
         for i, rect in enumerate(self.level_rects, start=1):
-        # rectangle (vous pouvez changer les couleurs)
-            pygame.draw.rect(screen, (230, 230, 230), rect, border_radius=14)
-            pygame.draw.rect(screen, (60, 60, 60), rect, width=3, border_radius=14)
-
-        # texte "Level i" en dessous
+            is_hover = rect.collidepoint(mouse_pos)  # True si la souris est dans le rect
+    
+            # Effet "enfoncé" : si hover, on dessine un peu plus bas
+            draw_rect = rect.move(0, 4) if is_hover else rect
+    
+            # Couleur différente au survol
+            fill = (210, 210, 210) if is_hover else (230, 230, 230)
+    
+            # Ombre légère (optionnel, effet bouton)
+            shadow_rect = rect.move(0, 6)
+            pygame.draw.rect(screen, (120, 120, 120), shadow_rect, border_radius=14)
+    
+            # Rectangle principal
+            pygame.draw.rect(screen, fill, draw_rect, border_radius=14)
+            pygame.draw.rect(screen, (60, 60, 60), draw_rect, width=3, border_radius=14)
+    
+            # Texte
             label = self.level_font.render(f"Level {i}", True, (255, 255, 255))
             label_rect = label.get_rect(midtop=(rect.centerx, rect.bottom + 10))
             screen.blit(label, label_rect)
-
         
         
         
         
         
-        
-carte = Map()       
-pygame.init()    
-snake = Snake(carte)
-gameboard = Gameboard()
+# ""       
+# carte = Map()       
+# pygame.init()    
+# snake = Snake(carte)
+# gameboard = Gameboard()
          
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+# screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
 
-carte.walls()
-carte.data[5][7] = 3
-carte.data[4][4] = 2
-carte.data[4][5] = 22
-carte.data[15][15] = -31
-carte.data[22][6] = 34
-affichage = Display(carte, snake, gameboard)  
+# carte.walls()
+# carte.data[5][7] = 3
+# carte.data[4][4] = 2
+# carte.data[4][5] = 22
+# carte.data[15][15] = -31
+# carte.data[22][6] = 34
+# affichage = Display(carte, snake, gameboard)  
 
 
-running = True
-while running:
-    for event in pygame.event.get():  # regarde quels événements se sont produits
-        if event.type == pygame.KEYDOWN:  # une touche a été enfoncée
-            if event.key == pygame.K_ESCAPE:  # la touche échapp a été enfoncée
-                running = False
+# running = True
+# while running:
+#     for event in pygame.event.get():  # regarde quels événements se sont produits
+#         if event.type == pygame.KEYDOWN:  # une touche a été enfoncée
+#             if event.key == pygame.K_ESCAPE:  # la touche échapp a été enfoncée
+#                 running = False
 
-    screen.fill((170, 220, 170))
-    affichage.draw_grid_background(screen)  # remplit l'écran en blanc
+#     screen.fill((170, 220, 170))
+#     affichage.draw_grid_background(screen)  # remplit l'écran en blanc
     
-    affichage.calculate_offset(screen)
-    affichage.draw_game_title(screen, "Jeu Snake")
-    affichage.draw_level_select(screen)
-    affichage.draw_grid(screen)
-    affichage.border(screen)
-    affichage.draw_apple(screen)
-    affichage.draw_snake_head(screen)
-    affichage.draw_snake_body(screen)
-    affichage.draw_panel_score(screen)
-    affichage.draw_trap(screen)
-    affichage.draw_portail(screen)
+#     affichage.calculate_offset(screen)
+#     affichage.draw_game_title(screen, "Jeu Snake")
+#     affichage.draw_level_select(screen)
+#     affichage.draw_grid(screen)
+#     affichage.border(screen)
+#     afpygame.display.flip()fichage.draw_apple(screen)
+#     affichage.draw_snake_head(screen)
+#     affichage.draw_snake_body(screen)
+#     affichage.draw_panel_score(screen)
+#     affichage.draw_trap(screen)
+#     affichage.draw_portail(screen)
     
-    if gameboard.game_over: 
+#     if gameboard.game_over: 
         
         
-        affichage.display_game_over()
+#         affichage.display_game_over()
         
         
-    pygame.display.flip()
+#     
 
-pygame.quit()      
+# pygame.quit()      
