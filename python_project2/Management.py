@@ -5,8 +5,6 @@ from interface import *
 from levels import *
 
 
-
-
 class Management:
     
     def __init__(self, the_map, cell_size=60, move_ms=1000):
