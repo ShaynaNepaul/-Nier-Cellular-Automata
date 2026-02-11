@@ -2,6 +2,7 @@ import pygame
 from map import Map
 from food import Food
 
+
 class Snake:
     def __init__(self, the_map):
         self.map = the_map #map initialization with only 0 and 1
@@ -18,83 +19,139 @@ class Snake:
         # Update map: -2 represents the tail
         self.map.data[self.tail[1]][self.tail[0]] = -2
         self.alive = True
+        self.portals = None
+        
+    
 
 
-    def handle_key(self, key): 
-        # Get info on which arrow key is pressed
-        if key == pygame.K_UP: #true if up arrow is pressed
-            self.direction = (0,-1) #cest inversé c'est normal lol
-        if key == pygame.K_DOWN :
-            self.direction = (0,1) #true if down arrow is pressed
-
-        if key == pygame.K_LEFT :
-            self.direction=(-1,0)
-
-        if key == pygame.K_RIGHT:
-            self.direction = (1,0)
+    def handle_key(self, key): #récupère l'info sur quelle flèche est pressée
+    
+    
+        new_directions = {
+            pygame.K_UP: (0, -1),
+            pygame.K_DOWN: (0, 1),
+            pygame.K_LEFT: (-1, 0),
+            pygame.K_RIGHT: (1, 0)
+        }
+        
+        
+        
+        if key in new_directions:
+            new_dir = new_directions[key]
+    
+            # interdit demi-tour
+            if new_dir != (-self.direction[0], -self.direction[1]):
+                self.direction = new_dir
+                
+    def update_portals(self):
+        """Cherche les deux portails -41 et les mémorise."""
+        if self.portals is None:
+            found = []
+            for j in range(self.map.longueur):
+                for i in range(self.map.largeur):
+                    if self.map.data[j][i] == -41:
+                        found.append((i, j))
+            if len(found) == 2:
+                self.portals = found
 
     def moove(self, the_food): #bouge selon
         """ Movement implementation """
-        x,y = self.head #Initial position of the head on the map
+        old_x,old_y = self.head #Initial position of the head on the map
         old_tail = self.body[-1] # Store last tail position to clear it later
-        new_x, new_y = x + self.direction[0], y+ self.direction[1] # new head position according to the arrow pressed
+        new_x, new_y = old_x + self.direction[0], old_y+ self.direction[1] # new head position according to the arrow pressed
         
 
-        # Exception : 
-        try: 
-            x = self.map.data[new_y][new_x]
+        try:
+            cell_type = self.map.data[new_y][new_x]   # on LIT la case cible
         except IndexError:
             self.alive = False
             print("Game over il sort de la map")
             return
-        if x in (22, -2):
-            self.alive = False
-            print("game over, collision corps ")
-            return
+        
+        self.update_portals()
+        portals = self.portals if self.portals is not None else []
+
         
         self.head= (new_x, new_y)
+
+                    
+                    
+        # --- collision corps ---
+        # (22 = corps, -2 = queue)
+        if cell_type in (22, -2, 1):
+            self.alive = False
+            print("game over, collision corps")
+            return            
+
+
+                    
+                    
+# =========================================================
+# PORTAIL : si on marche sur -41
+# =========================================================
+        if cell_type == -41 and len(portals) == 2:
+            (x1, y1), (x2, y2) = portals
+        
+            # 1) avancer d'une case comme "vide"
+            self.body.insert(0, [new_x, new_y])
+            self.body.pop()
+        
+            # 2) téléport vers l'autre centre
+            if (new_x, new_y) == (x1, y1):
+                new_x, new_y = x2, y2
+            else:
+                new_x, new_y = x1, y1
+        
+            # mettre à jour la tête ET le body[0] 
+            self.head = (new_x, new_y)
+            self.body[0] = self.head
         
 
         # --- Snake Evolution ---
 
-        # Case 0: Empty space
-        if self.map.data[new_y][new_x]==0:
-            self.body.insert(0, self.head) # Add new head at the first position in body with new tile coordinates
-            self.body.pop() # Remove old tail
+        else:
+            # Case 0: Empty space
+            if self.map.data[new_y][new_x]==0:
+                self.body.insert(0, self.head) # Add new head at the first position in body with new tile coordinates
+                self.body.pop() # Remove old tail
+    
+            # Case 3: Food
+            elif self.map.data[new_y][new_x] == 3:
+                self.body.insert(0,self.head) # Add new head (no pop = growth of the snake)
+                the_food.stock_food-=1 #Update food storage
+                the_food.add_food() # Add an apple right after eating one
+                self.score += 1 # Update score
+    
+            # Case -3: Trap 
+            elif self.map.data[new_y][new_x] == -3:
+                self.score -= 10 # Decrease the score 
+                self.body.insert(0,self.head)
+                
+    
 
-        # Case 3: Food
-        elif self.map.data[new_y][new_x] == 3:
-            self.body.insert(0,self.head) # Add new head (no pop = growth of the snake)
-            the_food.stock_food-=1 #Update food storage
-            the_food.add_food() # Add an apple right after eating one
-            self.score += 1 # Update score
-
-        # Case -3: Trap 
-        elif self.map.data[new_y][new_x] == -3:
-            self.score -= 10 # Decrease the score 
-            self.body.insert(0,self.head)
-            #on tej la moitié de son corps :
-
-        # Case: Wall (1) or Self-collision (22 or -2)
-        elif self.map.data[new_y][new_x] == -1 or self.map.data[y][x]==22 or self.map.data[y][x]==-2:
-            self.alive = False
-            print("game over")
-            return 
-
-
-
-        # --- MAP RENDERING UPDATE ---
-
-        self.map.data[new_y][new_x] = 2 # New position of the head
-        tail = self.body[-1] # Position of the tail
-
-        self.map.data[tail[1]][tail[0]] = -2 #New position of the tail
-        self.map.data[old_tail[1]][old_tail[0]] = 0 # Clear the old tail position
-
-        # Replace other positions of the body by 22
-
-        for i in range(1,len(self.body)-1):
-
-            body_i = self.body[i]
-
-            self.map.data[body_i[1]][body_i[0]] = 22
+        
+# =========================================================
+# REDRAW COMPLET DU SNAKE SUR LA MAP
+# (évite tous les bugs de tête/corps lors de téléport)
+# =========================================================
+        
+        # 1) effacer anciennes traces du snake
+        self.map.data[self.map.data == 2] = 0
+        self.map.data[self.map.data == 22] = 0
+        self.map.data[self.map.data == -2] = 0
+        
+        # 2) dessiner tête / corps / queue selon self.body
+        hx, hy = self.body[0]
+        self.map.data[hy][hx] = 2
+        
+        tx, ty = self.body[-1]
+        self.map.data[ty][tx] = -2
+        
+        for bx, by in self.body[1:-1]:
+            self.map.data[by][bx] = 22
+        
+        # 3) restaurer les portails sans écraser le snake
+        snake_cells = {(bx, by) for bx, by in self.body}
+        for (px, py) in portals:
+            if (px, py) not in snake_cells:
+                self.map.data[py][px] = -41
