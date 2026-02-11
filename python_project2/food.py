@@ -123,22 +123,37 @@ class Food:
         else : 
             orientation = "vertical"
 
-        if orientation == "horizontal": 
+        for _ in range(50): # On tente 50 tirages maximum
+            res = self.identify_empty_cells()
+            
+            if res is False: 
+                return # Si la map est pleine, on arrête tout
+            
+            i, j = res
 
-            line_i = self.map.data[i,:]
-            line_i2 = self.map.data[i+2,:]
-            mask_i = (line_i == 0)
-            mask_i2 = (line_i2 == 0)
-            line_i[mask_i] = self.Cell_status["wall"]
-            line_i2[mask_i2] = self.Cell_status["wall"]
-
-        else : 
-            line_j = self.map.data[:,j]
-            line_j2 = self.map.data[:,j+2]
-            mask_j = (line_j == 0)
-            mask_j2 = (line_j2 == 0)
-            line_j[mask_j] = self.Cell_status["wall"]
-            line_j2[mask_j2] = self.Cell_status["wall"]
+            if orientation == "horizontal":
+                # On vérifie si on peut poser le mur i+2 sans sortir de la map
+                if i + 2 < self.map.longueur:
+                    line_i = self.map.data[i, :]
+                    line_i2 = self.map.data[i + 2, :]
+                    
+                    # On ne remplace que les cases vides (0)
+                    line_i[line_i == 0] = self.Cell_status["wall"]
+                    line_i2[line_i2 == 0] = self.Cell_status["wall"]
+                    
+                    return # SUCCESS : On sort de la fonction
+                
+            else: # orientation == "vertical"
+                # On vérifie si on peut poser le mur j+2 sans sortir de la map
+                if j + 2 < self.map.largeur:
+                    line_j = self.map.data[:, j]
+                    line_j2 = self.map.data[:, j + 2]
+                    
+                    # On ne remplace que les cases vides (0)
+                    line_j[line_j == 0] = self.Cell_status["wall"]
+                    line_j2[line_j2 == 0] = self.Cell_status["wall"]
+                    
+                    return # SUCCESS : On sort de la fonction
     
     def reduce_map_wall(self): 
         """
