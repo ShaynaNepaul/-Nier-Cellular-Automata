@@ -159,16 +159,17 @@ class Food:
         """
         Reduce the size of the map by adding walls with a thickness
         """
-        length = self.map.hauteur 
+        length = self.map.largeur
         width = self.map.largeur 
+        thickness = 5
         #Up line
-        self.map.data[:5, :] = self.Cell_status["wall"]
+        self.map.data[:thickness, :] = self.Cell_status["wall"]
         #bottom line
-        self.map.data[length-5:, :] = self.Cell_status["wall"]
+        self.map.data[length-thickness:, :] = self.Cell_status["wall"]
         #Left 
-        self.map.data[:, :5] = self.Cell_status["wall"]
+        self.map.data[:, :thickness] = self.Cell_status["wall"]
         #Right 
-        self.map.data[:, width-5:] = self.Cell_status["wall"]
+        self.map.data[:, width-thickness:] = self.Cell_status["wall"]
 
 
     def speed_up_zone(self): 
