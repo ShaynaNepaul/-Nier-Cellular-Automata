@@ -122,11 +122,17 @@ class Snake:
                 the_food.add_food() # Add an apple right after eating one
                 self.score += 1 # Update score
     
-            # Case -3: Trap 
-            elif self.map.data[new_y][new_x] == -3:
+            # Case -31: Trap 
+            elif self.map.data[new_y][new_x] == -31:
+                self.map.data[new_y][new_x] = 0
                 self.score -= 10 # Decrease the score 
+                #self.body.insert(0,self.head)
+
+            #Case 4 : Combo food
+            elif self.map.data[new_y][new_x] == 4:
                 self.body.insert(0,self.head)
-                return "TRAP_APPEARS"
+                self.score += 5 #incerase food
+
                 
     
 
