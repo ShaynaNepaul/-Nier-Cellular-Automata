@@ -14,7 +14,8 @@ class Food:
         "tail": -2,
         "body" : 22,
         "portal_A" :-41, 
-        "portal_B" : -41
+        "portal_B" : -41, 
+        "combo_food" : 4
     }
 
     def __init__(self, the_map, stock_food):
@@ -215,3 +216,34 @@ class Food:
             
             # Return coordinates 
             return pos_a, pos_b
+    
+    def combo_food(self): 
+        
+        empty_cells = [
+            (i, j)
+            for i in range(self.map.longueur)
+            for j in range(self.map.largeur)
+            if self.map.data[i][j] == self.Cell_status["empty"]
+        ]
+        risky_cells = []
+
+        for i, j in empty_cells:
+            # On vérifie les voisins (Haut, Bas, Gauche, Droite)
+            neighbors = [(i-1, j), (i+1, j), (i, j-1), (i, j+1)]
+            for ni, nj in neighbors:
+                # Si le voisin est dans la grille et que c'est un mur
+                if 0 <= ni < self.map.largeur and 0 <= nj < self.map.longueur:
+                    if self.map.data[ni][nj] == self.Cell_status['wall']:
+                        risky_cells.append((i, j))
+                        break # On en a trouvé un, pas besoin de vérifier les autres voisins
+
+        # Si on a trouvé des cases près des murs, on en choisit une
+        if risky_cells:
+            import random
+            i, j = random.choice(risky_cells)
+            self.map.data[i][j] = self.Cell_status['combo_food']
+            return True
+        
+        # Sinon, on utilise la méthode classique (add) pour ne pas bloquer le jeu
+        return self.add("combo_food")
+
