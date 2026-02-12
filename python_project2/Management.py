@@ -8,25 +8,27 @@ from levels import *
 class Management:
     
     def __init__(self, the_map, cell_size=60, move_ms=1000):
+        # Initialise game window
         pygame.init()
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.clock = pygame.time.Clock()
 
+        # Call librairies
         self.map = the_map
         self.map.walls()
         self.snake = Snake(self.map)
-        
-        self.gameboard = Gameboard(self.snake)
-        
-        
-        # On initialise food avec un stock par défaut, load_level le mettra à jour
-        self.food = Food(self.map, stock_food=0)
+        self.gameboard = Gameboard(self.snake) 
+        self.food = Food(self.map, stock_food=0) #Initialise Food with a default stock, updated by load_level according on the level
 
         # Propriétés de gestion
         self.state = "menu"
         self.current_level = 1
         self.base_move_ms = move_ms 
-        self.MOVE_EVENT = pygame.USEREVENT + 1
+        self.MOVE_EVENT = pygame.USEREVENT + 1 #Timer for the movement
+        self.TRAP_TIMER =  pygame.USEREVENT + 2 #Timer for traps
+        self.FOOD_COMBO_TIMER = pygame.USEREVENT + + 3
+        
+        
 
         pygame.time.set_timer(self.MOVE_EVENT, 0) #on met le timer à 0 quand on est dans le menu
 
@@ -35,28 +37,42 @@ class Management:
 
         self.display = Display(self.map, self.snake, self.gameboard, cell_size=cell_size)
 
+    #======================================
+    # Initialization of the current level 
+    #======================================
+
     def load_level(self):
         """ Applique les paramètres du niveau actuel depuis le dictionnaire LEVELS """
         level_key = str(self.current_level)
         
+        # Get parameters of the current level : stock_apple, traps, snake speed
         if level_key in LEVELS:
             datas = LEVELS[level_key]
             
-            # 1. Mise à jour du stock de nourriture
+            # 1. Update apples stock
             self.food.stock_food = datas["stock_apple"]
             
-            # 2. Mise à jour de la vitesse (on modifie le timer)
-            # On peut utiliser la valeur 'speed' de ton dict pour ajuster le move_ms
-            # Plus 'speed' est haut, plus l'intervalle est court
+            # 2. Update snake spped
+            # Adapte self.base_move_ms to correspond to the snake speed
             new_speed = max(50, self.base_move_ms - (datas["speed"] * 10)) 
             pygame.time.set_timer(self.MOVE_EVENT, new_speed)
             
-            # 3. Placement des pièges du niveau
-            for trap_func in datas["traps"]:
-                trap_func(self.food)
+            # 3. List of traps
+            self.trap_to_placed = list(datas["traps"])
+
+            # 4. Placement des osbtacles
+            nb_to_place = datas.get('nombre_obstacles', 0)
+            for _ in range(nb_to_place):
+                Food.pop_up_bloch_walls(self.food)
             
-            # 4. On place la première pomme
+            # 5. Place first apple
             self.food.add_food()
+            freq_trap_apparition = datas["frequence"]
+            pygame.time.set_timer(self.TRAP_TIMER, freq_trap_apparition)
+            self.food.add_wall_trap()
+            if datas["bonus"] == "yes":
+                pygame.time.set_timer(self.FOOD_COMBO_TIMER, 30000)
+                self.food.combo_food()
             print(f"Niveau {self.current_level} lancé !")
         else:
             return False # Plus de niveaux
@@ -82,9 +98,6 @@ class Management:
 
         self.load_level()
         self.state = "play"
-
-
-
 
     def go_to_menu(self):
         self.state = "menu"                                # repasse en état menu
@@ -112,24 +125,26 @@ class Management:
                   
                       
                 if self.state == "victoire":
-                    self.display.display_victory(self.screen)
                                                           
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         self.go_to_menu()
-                
                     
                       
-            # menu
+#===========================#
+# MENU 
+#===========================#
                 if self.state == "menu":
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_pos = event.pos
+                        self.game_active = True
                         for level_num, rect in enumerate(self.display.level_rects, start=1):
                             if rect.collidepoint(mouse_pos):
                                 self.start_level(level_num)
                                 break
-                    continue
 
-# Jeu
+#===========================#
+# JEU
+#===========================#
                 if self.state == "play":
                     if event.type == pygame.KEYDOWN:
                         self.snake.handle_key(event.key)
@@ -137,7 +152,6 @@ class Management:
                     if event.type == self.MOVE_EVENT:
                                     # 1) on fait avancer (peut rendre alive=False)
                         self.snake.moove(self.food)
-                            
                                     # 2) on met à jour game_over juste après
                         self.gameboard.end_game()
                             
@@ -152,6 +166,15 @@ class Management:
                            
                             self.state = "victoire"
                             pygame.time.set_timer(self.MOVE_EVENT, 0)
+
+                    if event.type == self.TRAP_TIMER:
+                        # Cherche une case vide et place une bombe
+                        self.food.add_wall_trap() 
+                        print("Un nouveau piège est apparu !")
+
+                    if event.type == self.FOOD_COMBO_TIMER : 
+                        self.food.combo_food()
+                        print("Un nouveau combo est apparu !")
                             
                     
 
@@ -174,6 +197,7 @@ class Management:
             self.display.draw_panel_score(self.screen)
             self.display.draw_trap(self.screen)
             self.display.draw_portail(self.screen) 
+            self.display.draw_apple_combo(self.screen)
             if self.gameboard.game_over: 
                     
                     
