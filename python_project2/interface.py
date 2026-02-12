@@ -58,6 +58,8 @@ class Display:
         
         self.apple_img = pygame.image.load("apple.png").convert_alpha()
         self.apple_img = pygame.transform.smoothscale(self.apple_img, (self.cell_size, self.cell_size) ) #pour rescale l'image à la taille d'une cellule
+        self.golden_apple_img = pygame.image.load("golden_apple.png").convert_alpha()
+        self.golden_apple_img = pygame.transform.smoothscale(self.golden_apple_img, (self.cell_size, self.cell_size) )
         
         self.bomb_img = pygame.image.load("Bomb.png").convert_alpha()
         self.bomb_img = pygame.transform.smoothscale(self.bomb_img, (self.cell_size, self.cell_size) ) #pour rescale l'image à la taille d'une cellule
@@ -192,6 +194,16 @@ class Display:
 
              x, y = self.cell_to_pixel(k[0], k[1])
              screen.blit(self.apple_img, (x, y)) #blit c'est pour afficher une image
+    
+    def draw_apple_combo(self, screen):
+             
+         coords = np.argwhere(self.map.data == 4) #recupère sous forme de liste les coordonnées où on a un 3 
+         print("combo")  
+         
+         for k in coords:
+
+             x, y = self.cell_to_pixel(k[0], k[1])
+             screen.blit(self.golden_apple_img, (x, y)) #blit c'est pour afficher une image
              
     
     def draw_trap(self, screen): 
