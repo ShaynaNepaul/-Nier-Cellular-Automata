@@ -104,12 +104,12 @@ class Food:
 
         if param <= 0.5 : 
             # Honrizontal line
-            line = self.map.data[i,:]
+            line = self.map.data[i,:5]
             mask = (line == 0)
             line[mask] = self.Cell_status["wall"]
         else : 
             #Vertical line
-            line = self.map.data[:,j]
+            line = self.map.data[5:,j]
             mask = (line == 0)
             line[mask] = self.Cell_status["wall"]
 
@@ -134,8 +134,8 @@ class Food:
             if orientation == "horizontal":
                 # On vérifie si on peut poser le mur i+2 sans sortir de la map
                 if i + 2 < self.map.longueur:
-                    line_i = self.map.data[i, :]
-                    line_i2 = self.map.data[i + 2, :]
+                    line_i = self.map.data[i, :5]
+                    line_i2 = self.map.data[i + 2, :5]
                     
                     # On ne remplace que les cases vides (0)
                     line_i[line_i == 0] = self.Cell_status["wall"]
@@ -146,8 +146,8 @@ class Food:
             else: # orientation == "vertical"
                 # On vérifie si on peut poser le mur j+2 sans sortir de la map
                 if j + 2 < self.map.largeur:
-                    line_j = self.map.data[:, j]
-                    line_j2 = self.map.data[:, j + 2]
+                    line_j = self.map.data[5:, j]
+                    line_j2 = self.map.data[5:, j + 2]
                     
                     # On ne remplace que les cases vides (0)
                     line_j[line_j == 0] = self.Cell_status["wall"]
@@ -185,6 +185,19 @@ class Food:
         
         # We return the coordinates so the game knows what to delete later
         return (r_start, r_end, c_start, c_end)
+    
+    def place_fixed_walls(self, layout):
+        """
+        Take a list of coordinates and place walls
+        
+        :param layout: list of coordinates 
+        """
+
+        for i, j in layout:
+        # On vérifie que les coordonnées sont bien dans la grille
+            if 0 <= i < self.map.largeur and 0 <= j < self.map.longueur:
+                # On met à jour la matrice avec le statut 'wall'
+                self.map.data[i][j] = self.Cell_status['wall']
     
     def portail(self): 
 
