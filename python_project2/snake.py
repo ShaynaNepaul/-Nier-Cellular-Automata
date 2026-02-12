@@ -126,6 +126,7 @@ class Snake:
             elif self.map.data[new_y][new_x] == -3:
                 self.score -= 10 # Decrease the score 
                 self.body.insert(0,self.head)
+                return "TRAP_APPEARS"
                 
     
 
