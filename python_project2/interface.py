@@ -85,7 +85,7 @@ class Display:
         self.level_w = 120
         self.level_h = 120
         self.level_gap = 60            # espace entre les rectangles
-        self.level_left = 180        # marge à gauche
+        self.level_left = 150        # marge à gauche
         self.level_top = 400          # marge en haut (à ajuster)
 
         # on crée les 4 rectangles (2 colonnes x 2 lignes)
@@ -250,9 +250,7 @@ class Display:
 
     def draw_panel_score(self, screen):
         
-         
-        
-        self.score = self.gameboard.score
+        self.score = self.snake.score
         
         
         #on récupère la taille de la grille : 
@@ -273,7 +271,7 @@ class Display:
         pygame.draw.rect(screen, (80, 80, 80), panel_rect, width=3, border_radius=14) #on dessine une bordure par dessus
         
         title = self.font_title.render("Score", True, (255, 255, 255)) #crée une surface avec le texte "Score"
-        value = self.font_value.render(str(self.gameboard.score), True, (255, 255, 255)) #pareil avec la valeur
+        value = self.font_value.render(str(self.snake.score), True, (255, 255, 255)) #pareil avec la valeur
         
         marge = 18                                          #on crée une marge pour que le texte soit pas collé au rectangle
         screen.blit(title, (x + marge, y + marge))          #on def la position du texte "Score"
@@ -342,10 +340,6 @@ class Display:
             label = self.level_font.render(f"Level {i}", True, (255, 255, 255))
             label_rect = label.get_rect(midtop=(rect.centerx, rect.bottom + 10))
             screen.blit(label, label_rect)
-        
-        
-        
-        
         
 # ""       
 # carte = Map()       
