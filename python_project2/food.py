@@ -218,7 +218,7 @@ class Food:
             return pos_a, pos_b
     
     def combo_food(self): 
-        
+
         empty_cells = [
             (i, j)
             for i in range(self.map.longueur)
@@ -239,7 +239,6 @@ class Food:
 
         # Si on a trouvé des cases près des murs, on en choisit une
         if risky_cells:
-            import random
             i, j = random.choice(risky_cells)
             self.map.data[i][j] = self.Cell_status['combo_food']
             return True
