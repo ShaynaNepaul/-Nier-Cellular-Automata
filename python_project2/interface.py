@@ -62,7 +62,8 @@ class Display:
         self.golden_apple_img = pygame.transform.smoothscale(self.golden_apple_img, (self.cell_size, self.cell_size) )
         
         self.bomb_img = pygame.image.load("Bomb.png").convert_alpha()
-        self.bomb_img = pygame.transform.smoothscale(self.bomb_img, (self.cell_size, self.cell_size) ) #pour rescale l'image à la taille d'une cellule
+        
+        self.bomb_img = pygame.transform.smoothscale(self.bomb_img, (self.cell_size + 2, self.cell_size+2) ) #pour rescale l'image à la taille d'une cellule
         
         self.snake_head = pygame.image.load("snake_head.png").convert_alpha()
         self.snake_head = pygame.transform.smoothscale(self.snake_head, (self.cell_size, self.cell_size))
