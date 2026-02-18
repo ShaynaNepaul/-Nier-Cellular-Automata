@@ -1,6 +1,6 @@
 # Nier - Cellular Automata
 
-## 2️⃣ Project Structure (OOP Architecture)
+## Project Structure (OOP Architecture)
 
 The project is organized around several main classes:  
 
