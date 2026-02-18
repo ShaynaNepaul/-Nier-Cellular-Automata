@@ -64,7 +64,7 @@ Handles the snake.
 
 ---
 
-## 3️⃣ Overall Functioning
+## Overall Functioning
 
 - The **Management** class executes the main game loop.  
 - The loop collects player actions, updates the **Snake**, **Map**, and **Food**, and refreshes the display via **Display**.  
