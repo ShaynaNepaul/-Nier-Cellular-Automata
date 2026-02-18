@@ -1,76 +1,123 @@
-import random
+import random  # Used to generate random positions for food or other game elements
+
 
 class Food:
 
+    """
+        
+    This class manages all interactive items placed on the game map
+    (such as apples, bombs, walls, etc.)
+
+    It is used for:
+    - Identifying empty cells to determine whether an item can be placed.
+    - Placing items on the map and updating the game grid accordingly.
+    - Handling special placement logic (e.g., bonus food near walls,
+    3x3 wall blocks, and portals).
+
+    This class directly interacts with the game map and ensures that
+    the grid remains up to date.
+    
+    """
+
+    # Dictionary that defines the status of each cell in the game grid.
+    # Each key represents an element in the game,
+    # and each value is a numeric code used to identify that element.
     Cell_status = {
-        "empty": 0,
-        "wall": 1,
-        "head" : 2,
-        "food": 3,
-        "wall_trap": -31,
-        "orientation_trap" : -32, 
-        "acceleration_trap" : -33,
-        "acceleration_zone" : -333,
-        "tail": -2,
-        "body" : 22,
-        "portal_A" :-41, 
-        "portal_B" : -42
+        "empty": 0, # Empty cell
+        "wall": 1,  # Wall or obstacle
+        "food": 3,  #apple
+        "combo_food" : 4, #bonus
+        "bomb": -31, # Bomb (causes a penalty)
+        "portal_A" :-41, #portal entrance
+        "portal_B" : -41 #portal exit
     }
 
+
+
     def __init__(self, the_map, stock_food):
+
+        """
+        We initialize the food class with a map reference
+        
+        the_map (Map): The game grid where items will be placed.
+        stock_food (int): The total number of food items required to complete the level. 
+        This serves as the win condition; we win
+        once this inventory reaches zero.
+        """
         self.map = the_map
         self.stock_food = stock_food
 
+
+
     def identify_empty_cells(self):
 
-        "Identifies available empty cells and return new random coordinate generated" 
+        "Identify empty cells while ensuring items do not spawn adjacent to walls. and return new random coordinate generated" 
+
         # get all empty cells from the map
         # store the coordinate of cells whose value is 0
+        empty_cells = []
 
-        empty_cells = [
-            (i, j)
-            for i in range(self.map.longueur)
-            for j in range(self.map.largeur)
-            if self.map.data[i][j] == self.Cell_status["empty"]
-        ]
+        # Iterate through the grid (excluding outer boundaries to avoid errors)
+        for i in range(1, self.map.longueur - 1):
+            for j in range(1, self.map.largeur - 1):
+                if self.map.data[i][j] == self.Cell_status["empty"]:
+                    
+                    # Define neighbors: Up, Down, Left, Right
+                    neighbors = [
+                        self.map.data[i-1][j], self.map.data[i+1][j],
+                        self.map.data[i][j-1], self.map.data[i][j+1]
+                    ]
+                    
+                    # Only add cell if NO neighbor is a wall (value 1)
+                    if self.Cell_status["wall"] not in neighbors:
+                        empty_cells.append((i, j))
 
-        # check whether any cell is available to add something
+        # Return False if no safe cell is found, otherwise return random coordinates
         if not empty_cells:
             return False
-        i, j = random.choice(empty_cells)
+            
+        return random.choice(empty_cells)
 
-        return i,j
 
 
     def add(self, cell_type):
 
         """
-        Identifies available empty cells and update the map with the choosen object
-        Returns False if the map is full.
+        Identifies available empty cells thanks to identify_empty_cells() and update the map with the choosen object
+        Returns True if successful, False if the map is full.
 
-        :param cell_type: str
+        cell_type: we can choose which item we want to place on the map
         """
-        # randomly select a pair of coordinates (i, j) from the list of empty cells
+        # randomly select a pair of coordinates (i, j) from the list empty_cells
+        if self.identify_empty_cells() is False : 
+            return False
+        
         i, j = self.identify_empty_cells()
 
         # update the map at the chosen coordinates with the value corresponding to 'cell_type'
         self.map.data[i][j] = self.Cell_status[cell_type]
+        return True
+    
+
 
     def add_food(self):
-        return self.add("food")
+        """
+        Add an apple on the map
+        """
+        apple_placed = self.add("food")
+    
 
-    def add_wall_trap(self): 
-        return self.add("wall_trap")
-    
-    def add_orientation_trap(self): 
-        return self.add("orientation_trap")
-    
-    def acceleration_trap(self):
-        return self.add("acceleration_trap")
-    
-    def pop_up_bloch_walls(self): 
 
-        " Add a 3*3 bloc of walls"
+    def add_bomb(self): 
+        return self.add("bomb")
+    
+
+    
+    def place_obstacles(self): #pop_up_bloch_walls
+
+        """
+        Generates a 3x3 block of walls at a random location to increase level difficulty.
+        """
 
         i,j = self.identify_empty_cells()
 
@@ -82,82 +129,8 @@ class Food:
         sub_map = self.map.data[r_start:r_end, c_start:c_end]
 
         #Fill sub_map with O 
-        mask = (sub_map == 0)
+        mask = (sub_map == 0) #prevent collision with snake
         sub_map[mask] = self.Cell_status["wall"]
-
-    def pop_up_line_wall(self): 
-        " Add a full horizontal or vertical line of walls"
-
-        i,j = self.identify_empty_cells()
-        param = random.random()
-
-        if param <= 0.5 : 
-            # Honrizontal line
-            line = self.map.data[i:]
-            mask = (line == 0)
-            line[mask] = self.Cell_status["wall"]
-        else : 
-            #Vertical line
-            line = self.map.data[:j]
-            mask = (line == 0)
-            line[mask] = self.Cell_status["wall"]
-
-    def pop_up_tunnel_wall(self): 
-        " Creates two parallel walls with a path in the middle"
-        param = random.random()
-        i, j = self.identify_empty_cells()
-
-        if param < 0.5 : 
-            orientation = "horizontal"
-        else : 
-            orientation = "vertical"
-
-        if orientation == "horizontal": 
-
-            line_i = self.map.data[i:]
-            line_i2 = self.map.data[i+2:]
-            mask_i = (line_i == 0)
-            mask_i2 = (line_i2 == 0)
-            line_i[mask_i] = self.Cell_status["wall"]
-            line_i2[mask_i2] = self.Cell_status["wall"]
-
-        else : 
-            line_j = self.map.data[:j]
-            line_j2 = self.map.data[:j+2]
-            mask_j = (line_j == 0)
-            mask_j2 = (line_j2 == 0)
-            line_j[mask_j] = self.Cell_status["wall"]
-            line_j2[mask_j2] = self.Cell_status["wall"]
-    
-    def reduce_map_wall(self): 
-        """
-        Reduce the size of the map by adding walls with a thickness
-        """
-        length = self.map.hauteur 
-        width = self.map.largeur 
-        #Up line
-        self.map.data[:5,:] = self.Cell_status["wall"]
-        #bottom line
-        self.map.data[length- 5:,:] = self.Cell_status["wall"]
-        #Left 
-        self.map.data[:,5:] = self.Cell_status["wall"]
-        #Right 
-        self.map.data[:,:width-5] = self.Cell_status["wall"]
-
-
-    def speed_up_zone(self): 
-        i,j = self.identify_empty_cells()
-
-        r_start, r_end = max(0, i - 4), min(self.map.longueur, i + 5)
-        c_start, c_end = max(0, j - 4), min(self.map.largeur, j + 5)
-        
-        sub_map = self.map.data[r_start:r_end, c_start:c_end]
-
-        mask = (sub_map == 0)
-        sub_map[mask] = self.Cell_status["acceleration_zone"]
-        
-        # We return the coordinates so the game knows what to delete later
-        return (r_start, r_end, c_start, c_end)
     
     def portail(self): 
 
@@ -175,3 +148,45 @@ class Food:
             
             # Return coordinates 
             return pos_a, pos_b
+    
+    def combo_food(self): 
+
+        """
+        Spawns a 'combo' food item near walls to create a risk-reward challenge.
+
+        This method prioritizes empty cells adjacent to walls (risky cells). 
+        If no wall-adjacent cells are available, it defaults to standard random placement.
+
+        Returns:
+            bool: True if placed successfully
+        """
+        # Filter all currently available empty coordinates
+        empty_cells = [
+            (i, j)
+            for i in range(self.map.longueur)
+            for j in range(self.map.largeur)
+            if self.map.data[i][j] == self.Cell_status["empty"]
+        ]
+        #Identify 'risky' cells (empty cells touching at least one wall)
+        risky_cells = []
+
+        for i, j in empty_cells:
+            # Check closest neighbors (Up, Down, Left, Right)
+            neighbors = [(i-1, j), (i+1, j), (i, j-1), (i, j+1)]
+            for ni, nj in neighbors:
+                # Boundary check: ensure the neighbor is within matrix limits
+                if 0 <= ni < self.map.largeur and 0 <= nj < self.map.longueur:
+                    #If the neighbors is a wall
+                    if self.map.data[ni][nj] == self.Cell_status['wall']:
+                        risky_cells.append((i, j))
+                        break #Optimization : once we found one, no need verify all neighbors 
+
+        # If risky cells are identified, pick one with random
+        if risky_cells:
+            i, j = random.choice(risky_cells)
+            self.map.data[i][j] = self.Cell_status['combo_food']
+        else :
+        
+            # Otherwise standard placement if no risky cells are available
+            return self.add("food")
+

@@ -1,4 +1,4 @@
-from map import Map
+from the_map import Map
 from Management import Management
 
 def main():
