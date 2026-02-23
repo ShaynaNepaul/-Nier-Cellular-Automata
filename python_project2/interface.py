@@ -21,6 +21,7 @@ class Gameboard:
         self.game_over = False # devient True quand la partie est perdue
         self.snake = snake # référence du snake de la partie
         self.score = snake.score # score (au départ, celui du snake)
+        self.tot_pomme = 0
         
     def end_game(self):
         """Vérifie si le snake est mort.
@@ -65,7 +66,7 @@ class Display:
         self.bg_img = pygame.image.load("total_background.png").convert_alpha()
         self.bg_img.set_alpha(200) #change l'opacité du fond
         
-        self.panel_bg_img = pygame.image.load("background.png").convert_alpha()
+        self.panel_bg_img = pygame.image.load("fond_score_pomme.png").convert_alpha()
         self.panel_bg_img = pygame.transform.smoothscale(self.panel_bg_img, (self.panel_w, self.panel_h))
         
         self.img_game_over = pygame.image.load("game_over.png").convert_alpha()
@@ -290,12 +291,12 @@ class Display:
         pygame.draw.rect(screen, (80, 80, 80), panel_rect, width=3, border_radius=14) #on dessine une bordure par dessus
         
         # texte score
-        title = self.font_title.render("Score", True, (255, 255, 255)) #crée une surface avec le texte "Score"
-        value = self.font_value.render(str(self.snake.score), True, (255, 255, 255)) #pareil avec la valeur
-        
+        title = self.font_title.render("Score", True, (139, 69, 19)) #crée une surface avec le texte "Score"
+        value = self.font_value.render(str(self.snake.score) +" " + "/" +  " "+  str(self.gameboard.tot_pomme), True, (139, 69, 19)) #pareil avec la valeur
+
         marge = 18                                          
         screen.blit(title, (x + marge, y + marge))          
-        screen.blit(value, (x + marge, y + marge + 55))    
+        screen.blit(value, (x + 100, y + marge + 40))    
 
 
 
