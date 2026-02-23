@@ -65,4 +65,4 @@ Handles the snake.
 ---
 
 ## Requierement 
-Install `pyagame`  
+Install `pygame`  
