@@ -64,12 +64,5 @@ Handles the snake.
 
 ---
 
-## Overall Functioning
-
-- The **Management** class executes the main game loop.  
-- The loop collects player actions, updates the **Snake**, **Map**, and **Food**, and refreshes the display via **Display**.  
-- Interactions between classes manage:  
-  - Collision of the snake with walls or itself  
-  - Food consumption  
-  - Interaction with traps and portals  
-
+## Requierement 
+Install `pyagame`  
