@@ -20,6 +20,8 @@ class Management:
         
         # Initialise game window
         pygame.init()
+        self.player_name = input("Enter your name: ")
+        self.score_saved = False
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.clock = pygame.time.Clock()
 
@@ -66,6 +68,8 @@ class Management:
             
             # 1. Update apple stock
             self.food.stock_food = datas["stock_apple"]
+            self.gameboard.tot_pomme = self.food.stock_food
+
             
             # 2. Update snake speed
             
@@ -132,6 +136,9 @@ class Management:
         self.load_level()
         self.state = "play"
 
+        # Time : when we start a level
+        self.start_time = pygame.time.get_ticks()
+
 
     def go_to_menu(self):
         """Return to the menu state. We also stop the movement timer and reset the game_over variable."""
@@ -139,7 +146,34 @@ class Management:
         
         self.state = "menu"                                
         pygame.time.set_timer(self.MOVE_EVENT, 0)   # disable movement in menu   
-        self.gameboard.game_over = False           
+        self.gameboard.game_over = False     
+
+    def save_score(self):
+        """Enregistre le score actuel dans un fichier texte avec la date."""
+        import datetime # Pour savoir quand le score a été fait
+        
+        score_actuel = self.gameboard.score # Adapte selon le nom de ta variable de score
+        date_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+        elapsed_ms = pygame.time.get_ticks() - self.start_time
+        elapsed_seconds = elapsed_ms // 1000
+        minutes = elapsed_seconds // 60
+        seconds = elapsed_seconds % 60
+        chrono_str = f"{minutes:02d}:{seconds:02d}"
+
+        try:
+            with open("scores.txt", "a", encoding="utf-8") as f:
+                # Write player header
+                f.write(f"----- Player: {self.player_name} -----\n")
+                # Write score line
+                f.write(
+                    f"Niveau {self.current_level} "
+                    f"Score: {score_actuel}/{self.gameboard.tot_pomme} "
+                    f"Chrono: {chrono_str} "
+                    f"(Etat: {self.state})\n\n"
+                )
+            print(f"{self.player_name} : Score {score_actuel}")
+        except Exception as e:
+            print(f"Error while saving score: {e}")      
 
 
 
@@ -165,15 +199,23 @@ class Management:
                     running = False
             
                 if self.state == "game_over":   #switch to game over state
+                    if not self.score_saved:
+                        self.save_score()       # Save only once
+                        self.score_saved = True
                   
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:      # Click to return to menu
                       self.go_to_menu()  # ignore other events in this state
+                      
                     continue
                       
                 if self.state == "victoire": ## VICTORY state
+                    if not self.score_saved:
+                        self.save_score()       # Save only once
+                        self.score_saved = True
                                                           
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         self.go_to_menu()
+                        
                     
                     continue
                 
