@@ -4,6 +4,27 @@
 
 This Python project was developed during my second year of the QuOM Master’s programme (Quantum Processes, Optics and Matter) at Sorbonne University.
 
+
+## Requirements
+
+To run this project:
+
+1. Install `pygame`:
+
+```bash
+pip install pygame
+```
+
+2. Run each `.py` file.
+
+3. Finally, run the main file:
+
+```bash
+python main.py
+```
+
+
+
 ## Project Structure (OOP Architecture)
 
 The project is organized around several main classes:  
@@ -68,5 +89,3 @@ Handles the snake.
 
 ---
 
-## Requierement 
-Install `pygame`  
