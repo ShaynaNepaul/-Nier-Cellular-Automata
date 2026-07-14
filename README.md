@@ -1,5 +1,9 @@
 # Nier - Cellular Automata
 
+## Context
+
+This Python project was developed during my second year of the QuOM Master’s programme (Quantum Processes, Optics and Matter) at Sorbonne University.
+
 ## Project Structure (OOP Architecture)
 
 The project is organized around several main classes:  
